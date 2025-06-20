@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}All Products - Local Marketplace{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4 mb-4">All Products</h1>
+            
+            <!-- Search and Filter Section -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <input type="text" name="q" class="form-control" placeholder="Search products..." value="{{ request.GET.q }}">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="category">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                <option value="{{ category.slug }}" {% if request.GET.category == category.slug %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="region">
+                                <option value="">All Regions</option>
+                                {% for region in regions %}
+                                <option value="{{ region.slug }}" {% if request.GET.region == region.slug %}selected{% endif %}>
+                                    {{ region.get_name_display }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="city">
+                                <option value="">All Cities</option>
+                                {% if request.GET.region %}
+                                    {% for city in regions %}
+                                        {% if city.slug == request.GET.region %}
+                                            {% for city_obj in city.cities.all %}
+                                            <option value="{{ city_obj.slug }}" {% if request.GET.city == city_obj.slug %}selected{% endif %}>
+                                                {{ city_obj.name }}
+                                            </option>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" name="sort">
+                                <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest First</option>
+                                <option value="price_low" {% if request.GET.sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                                <option value="price_high" {% if request.GET.sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                {% for product in products %}
+                <div class="col">
+                    <div class="card h-100 product-card">
+                        {% if product.get_primary_image %}
+                        <img src="{{ product.get_primary_image.url }}" class="card-img-top" alt="{{ product.name }}">
+                        {% else %}
+                        <img src="{% static 'images/no-image.png' %}" class="card-img-top" alt="No image available">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ product.name }}</h5>
+                            <p class="card-text text-muted">{{ product.category.name }}</p>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    {{ product.get_location_display }}
+                                </small>
+                            </p>
+                            <p class="card-text">{{ product.description|truncatewords:20 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="h5 mb-0">₱{{ product.price }}</span>
+                                <div class="btn-group">
+                                    <a href="{% url 'marketplace:product_detail' product.slug %}" class="btn btn-outline-primary">
+                                        View Details
+                                    </a>
+                                    {% if user.is_authenticated %}
+                                    <button class="btn btn-outline-danger add-to-wishlist" data-product-id="{{ product.id }}">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        No products found. Please try different search criteria.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if products.has_other_pages %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if products.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ products.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.region %}&region={{ request.GET.region }}{% endif %}{% if request.GET.city %}&city={{ request.GET.city }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in products.paginator.page_range %}
+                    <li class="page-item {% if products.number == num %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.region %}&region={{ request.GET.region }}{% endif %}{% if request.GET.city %}&city={{ request.GET.city }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endfor %}
+
+                    {% if products.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ products.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.region %}&region={{ request.GET.region }}{% endif %}{% if request.GET.city %}&city={{ request.GET.city }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle "Clear Filters" button
+    document.getElementById('clearFilters').addEventListener('click', function() {
+        document.querySelector('input[name="q"]').value = '';
+        document.querySelector('select[name="category"]').selectedIndex = 0;
+        document.querySelector('select[name="sort"]').selectedIndex = 0;
+        document.querySelector('input[name="min_price"]').value = '';
+        document.querySelector('input[name="max_price"]').value = '';
+        this.form.submit();
+    });
+});
+</script>
+{% endblock %} 

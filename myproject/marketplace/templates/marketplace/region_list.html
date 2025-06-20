@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Browse by Region - Local Marketplace{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Browse by Region</h1>
+            <p class="text-muted mb-5">Find products from specific regions across the Philippines</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for region in regions %}
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm hover-card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        {% if region.name == 'luzon' %}
+                            <i class="fas fa-mountain fa-3x text-primary"></i>
+                        {% elif region.name == 'visayas' %}
+                            <i class="fas fa-water fa-3x text-info"></i>
+                        {% elif region.name == 'mindanao' %}
+                            <i class="fas fa-tree fa-3x text-success"></i>
+                        {% endif %}
+                    </div>
+                    <h4 class="card-title">{{ region.get_name_display }}</h4>
+                    <p class="text-muted">{{ region.description|default:"Explore products from this region" }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge bg-primary">{{ region.product_count }} products</span>
+                        <a href="{% url 'marketplace:region_detail' region.slug %}" class="btn btn-outline-primary">
+                            Browse Products
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center">
+            <i class="fas fa-map-marker-alt fa-4x text-muted mb-3"></i>
+            <h3>No regions available</h3>
+            <p class="text-muted">Regions will be added soon.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12 text-center">
+            <a href="{% url 'marketplace:product_list' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to All Products
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 

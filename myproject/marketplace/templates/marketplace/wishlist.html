@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Wishlist - Local Marketplace{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">My Wishlist</h1>
+
+    {% if wishlist_items %}
+    <div class="row g-4">
+        {% for item in wishlist_items %}
+        <div class="col-md-4">
+            <div class="card h-100 product-card">
+                <a href="{% url 'marketplace:product_detail' item.product.slug %}">
+                    {% if item.product.get_primary_image %}
+                        <img src="{{ item.product.get_primary_image.url }}" class="card-img-top" alt="{{ item.product.name }}">
+                    {% else %}
+                        <img src="{% static 'images/no-image.png' %}" class="card-img-top" alt="No image available">
+                    {% endif %}
+                </a>
+                <div class="card-body">
+                    <h5 class="card-title">{{ item.product.name }}</h5>
+                    <p class="card-text text-muted">{{ item.product.category.name }}</p>
+                    <p class="card-text fw-bold">${{ item.product.price }}</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{% url 'marketplace:product_detail' item.product.slug %}" class="btn btn-outline-primary btn-sm">
+                            View Details
+                        </a>
+                        <form method="post" action="{% url 'marketplace:remove_from_wishlist' item.product.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                Remove
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info" role="alert">
+        Your wishlist is empty. <a href="{% url 'marketplace:product_list' %}" class="alert-link">Browse products</a> to add items.
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %} 

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Profile - Local Marketplace{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">User Profile</h1>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Welcome, {{ user.username }}!</h5>
+                    <p class="card-text">This is your profile page. You can view and manage your account information here.</p>
+                    
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Member since:</strong> {{ user.date_joined|date:"F d, Y" }}</p>
+
+                    <h4>Account Actions</h4>
+                    <p>
+                        <a href="{% url 'marketplace:orders' %}" class="btn btn-primary">View My Orders</a>
+                        <a href="{% url 'marketplace:wishlist' %}" class="btn btn-outline-primary">View Wishlist</a>
+                        {# Add links to edit profile, change password, etc. later #}
+                    </p>
+
+                </div>
+            </div>
+        </div>
+        {# Optionally add a sidebar here for navigation or quick info #}
+        <div class="col-md-4">
+            {# Sidebar content goes here #}
+        </div>
+    </div>
+</div>
+{% endblock %} 

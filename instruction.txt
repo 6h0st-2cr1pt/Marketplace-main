@@ -1,0 +1,50 @@
+[ django-admin startproject myproject . ]
+manage.py
+asgi.py
+settings.py
+urls.py
+wsgi.py
+
+The dot ensures the project files are created directly within your desired folder, not nested in another folder with the same name.
+
+[ python manage.py startapp app_name ]
+admin.py
+apps.py
+models.py
+tests.py
+views.py
+
+venv\Scripts\Activate
+
+python manage.py makemigrations
+
+python manage.py migrate
+
+python manage.py runserver
+            To Run the Software
+
+Step 1: Activate the Virtual Environment using the terminal in VsCode.
+        Type - [ venv\Scripts\Activate ]
+
+Step 2: Run the software by typing a command in the Terminal.
+        Type - [ python manage.py runserver ]
+
+Step 3: click the provided link in the terminal to open the software.
+
+This will appear in the terminal after you run the command.
+
+=================================================
+
+         Watching for file changes with StatReloader
+         Performing system checks...
+         
+         System check identified no issues (0 silenced).
+         April 22, 2025 - 13:14:57
+         Django version 5.2, using settings 'endemic_trees.settings'
+         Starting development server at http://127.0.0.1:8000/   <--------------- Click this to open the Web app.
+         Quit the server with CTRL-BREAK.
+         
+         WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server          instead.
+         For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/
+
+=================================================

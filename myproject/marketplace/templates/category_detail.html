@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ category.name }} - Local Marketplace{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'marketplace:home' %}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4 mb-4">{{ category.name }}</h1>
+            {% if category.description %}
+            <p class="lead text-muted mb-5">{{ category.description }}</p>
+            {% endif %}
+            
+            <!-- Filter Section -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <select class="form-select" name="sort">
+                                <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest First</option>
+                                <option value="price_low" {% if request.GET.sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                                <option value="price_high" {% if request.GET.sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" name="condition">
+                                <option value="">All Conditions</option>
+                                {% for value, label in condition_choices %}
+                                <option value="{{ value }}" {% if request.GET.condition == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+                {% for product in products %}
+                <div class="col">
+                    <div class="card h-100 product-card">
+                        {% if product.get_primary_image %}
+                        <img src="{{ product.get_primary_image.url }}" class="card-img-top" alt="{{ product.name }}">
+                        {% else %}
+                        <img src="{% static 'images/no-image.png' %}" class="card-img-top" alt="No image available">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ product.name }}</h5>
+                            <p class="card-text">{{ product.description|truncatewords:20 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="h5 mb-0">${{ product.price }}</span>
+                                <div class="btn-group">
+                                    <a href="{% url 'marketplace:product_detail' product.slug %}" class="btn btn-outline-primary">
+                                        View Details
+                                    </a>
+                                    {% if user.is_authenticated %}
+                                    <button class="btn btn-outline-danger add-to-wishlist" data-product-id="{{ product.id }}">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        No products found in this category.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle sort changes
+    document.querySelector('select[name="sort"]').addEventListener('change', function() {
+        this.form.submit();
+    });
+});
+</script>
+{% endblock %} 

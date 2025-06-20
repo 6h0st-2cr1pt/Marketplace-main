@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Shopping Cart - Local Marketplace{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Shopping Cart</h1>
+    
+    {% if cart_items %}
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Cart Items -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    {% for item in cart_items %}
+                    <div class="row mb-4 cart-item">
+                        <div class="col-md-3">
+                            {% if item.product.get_primary_image %}
+                                <img src="{{ item.product.get_primary_image.url }}" alt="{{ item.product.name }}" class="img-fluid rounded">
+                            {% else %}
+                                <img src="{% static 'images/no-image.png' %}" alt="No image available" class="img-fluid rounded">
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="mb-1">{{ item.product.name }}</h5>
+                            <p class="text-muted mb-2">{{ item.product.category.name }}</p>
+                            <p class="mb-0">Unit: {{ item.product.category.unit }}</p>
+                            <p class="mb-0 text-info">
+                                <small>
+                                    {% if item.product.stock <= 0 %}
+                                        <span class="text-danger">Out of Stock</span>
+                                    {% elif item.product.stock <= 5 %}
+                                        <span class="text-warning">Only {{ item.product.stock }} left</span>
+                                    {% else %}
+                                        <span class="text-success">{{ item.product.stock }} in stock</span>
+                                    {% endif %}
+                                </small>
+                            </p>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <div class="d-flex align-items-center justify-content-end mb-2">
+                                <button class="btn btn-sm btn-outline-primary me-2" onclick="updateQuantity({{ item.id }}, 'decrease')">-</button>
+                                <span class="mx-2">{{ item.quantity }}</span>
+                                <button class="btn btn-sm btn-outline-primary ms-2" onclick="updateQuantity({{ item.id }}, 'increase')" {% if item.quantity >= item.product.stock %}disabled{% endif %}>+</button>
+                            </div>
+                            <p class="mb-2">₱{{ item.get_cost }}</p>
+                            <button class="btn btn-sm btn-danger" onclick="removeItem({{ item.id }})">
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}<hr>{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Order Summary -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Order Summary</h5>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <span>₱{{ cart.get_total_price }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Shipping</span>
+                        <span>Free</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-4">
+                        <strong>Total</strong>
+                        <strong>₱{{ cart.get_total_price }}</strong>
+                    </div>
+                    
+                    <button class="btn btn-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#checkoutModal">
+                        Proceed to Checkout
+                    </button>
+                    
+                    <a href="{% url 'marketplace:product_list' %}" class="btn btn-outline-primary w-100">
+                        Continue Shopping
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Checkout Modal -->
+    <div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content modal-glass">
+                <div class="modal-header modal-header-dark">
+                    <h5 class="modal-title text-white" id="checkoutModalLabel">Checkout</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body modal-body-dark">
+                    <form id="checkoutForm" method="POST" action="{% url 'marketplace:checkout' %}">
+                        {% csrf_token %}
+                        
+                        <!-- Shipping Information -->
+                        <h6 class="mb-3 text-white">Shipping Information</h6>
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label text-secondary">First Name</label>
+                                <input type="text" class="form-control form-control-dark" id="first_name" name="first_name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label text-secondary">Last Name</label>
+                                <input type="text" class="form-control form-control-dark" id="last_name" name="last_name" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label text-secondary">Email Address</label>
+                                <input type="email" class="form-control form-control-dark" id="email" name="email" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label text-secondary">Phone Number</label>
+                                <input type="tel" class="form-control form-control-dark" id="phone" name="phone" required>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label for="address" class="form-label text-secondary">Address</label>
+                                <textarea class="form-control form-control-dark" id="address" name="address" rows="3" required></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Method -->
+                        <h6 class="mb-3 text-white">Payment Method</h6>
+                        <div class="mb-4">
+                            <div class="form-check mb-2 text-secondary">
+                                <input class="form-check-input" type="radio" name="payment_method" value="cod" id="cod" checked>
+                                <label class="form-check-label" for="cod">
+                                    <i class="fas fa-money-bill-wave text-warning"></i> Cash on Delivery
+                                </label>
+                            </div>
+                            <div class="form-check mb-2 text-secondary">
+                                <input class="form-check-input" type="radio" name="payment_method" value="credit_card" id="credit_card">
+                                <label class="form-check-label" for="credit_card">
+                                    <i class="fas fa-credit-card text-warning"></i> Credit Card
+                                </label>
+                            </div>
+                            <div class="form-check mb-2 text-secondary">
+                                <input class="form-check-input" type="radio" name="payment_method" value="gcash" id="gcash">
+                                <label class="form-check-label" for="gcash">
+                                    <i class="fas fa-mobile-alt text-warning"></i> GCash
+                                </label>
+                            </div>
+                            <div class="form-check mb-2 text-secondary">
+                                <input class="form-check-input" type="radio" name="payment_method" value="paymaya" id="paymaya">
+                                <label class="form-check-label" for="paymaya">
+                                    <i class="fas fa-wallet text-warning"></i> PayMaya
+                                </label>
+                            </div>
+                            <div class="form-check text-secondary">
+                                <input class="form-check-input" type="radio" name="payment_method" value="paypal" id="paypal">
+                                <label class="form-check-label" for="paypal">
+                                    <i class="fab fa-paypal text-warning"></i> PayPal
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="text-white">Total: ₱{{ cart.get_total_price }}</h6>
+                            <button type="submit" class="btn btn-primary">Place Order</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
+        <h3>Your cart is empty</h3>
+        <p class="text-muted mb-4">Looks like you haven't added any items to your cart yet.</p>
+        <a href="{% url 'marketplace:product_list' %}" class="btn btn-primary">
+            Start Shopping
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateQuantity(itemId, action) {
+    fetch(`/cart/update/${itemId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: action })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            // Show error message if provided
+            if (data.message) {
+                alert(data.message);
+            } else {
+                alert('Error updating quantity. Please try again.');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating quantity. Please try again.');
+    });
+}
+
+function removeItem(itemId) {
+    if (confirm('Are you sure you want to remove this item from your cart?')) {
+        fetch(`/cart/remove/${itemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 

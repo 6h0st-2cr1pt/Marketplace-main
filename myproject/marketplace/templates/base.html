@@ -1,0 +1,277 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Local Product Marketplace{% endblock %}</title>
+    <link rel="icon" href="{% static 'icons/online-shopping.png' %}" type="image/png">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Flaticon -->
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-solid-rounded/css/uicons-solid-rounded.css'>
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-brands/css/uicons-brands.css'>
+    <!-- Font Awesome for cart icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div id="splash-screen">
+        <div class="splash-content">
+            <img src="{% static 'images/DTI.png' %}" alt="DTI Logo" class="splash-logo">
+            <h1 class="splash-title">Local Product Marketplace</h1>
+            <div class="splash-subtitle">Connecting Local Artisans with Global Customers</div>
+            <div class="loading-bar-container">
+                <div class="loading-bar"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-glass fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'marketplace:home' %}">
+                <img src="{% static 'icons/online-shopping.png' %}" alt="Marketplace Icon" class="me-2" style="height: 30px; width: auto;">
+                Local Marketplace
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'marketplace:home' %}">
+                            <i class="fi fi-rr-home"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'marketplace:product_list' %}">
+                            <i class="fi fi-rr-shopping-bag"></i> Products
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'marketplace:category_list' %}">
+                            <i class="fi fi-rr-apps"></i> Categories
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'marketplace:region_list' %}">
+                            <i class="fi fi-rr-marker"></i> Regions
+                        </a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    
+                    {% if user.is_authenticated %}
+                        <div class="dropdown">
+                            <button class="btn btn-glass dropdown-toggle border-warning" type="button" id="userMenu" data-bs-toggle="dropdown">
+                                <i class="fi fi-rr-user"></i> {{ user.username }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-glass">
+                                <li><a class="dropdown-item" href="{% url 'marketplace:profile' %}">
+                                    <i class="fi fi-rr-user-pen"></i> Profile
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'marketplace:orders' %}">
+                                    <i class="fi fi-rr-shopping-cart-check"></i> Orders
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'marketplace:logout' %}">
+                                    <i class="fi fi-rr-sign-out"></i> Logout
+                                </a></li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'marketplace:login' %}" class="btn btn-glass me-2 border-warning">
+                            <i class="fi fi-rr-sign-in"></i>&nbsp;Login
+                        </a>
+                        <a href="{% url 'marketplace:register' %}" class="btn btn-glass border-warning">
+                            <i class="fi fi-rr-user-add"></i> Register
+                        </a>
+                    {% endif %}
+
+                    <!-- Cart Icon -->
+                    <a class="nav-link ms-3 border-warning" href="{% url 'marketplace:cart' %}">
+                        <i class="fas fa-shopping-cart"></i>
+                        {# Optional: Add a badge for item count if cart context is available #}
+                        {# <span class="badge bg-secondary ms-1">{{ cart_item_count }}</span> #}
+                    </a>
+
+                    <!-- Wishlist Icon -->
+                    <a class="nav-link ms-3 border-warning" href="{% url 'marketplace:wishlist' %}">
+                        <i class="fas fa-heart"></i>
+                        {# Optional: Add a badge for item count if wishlist context is available #}
+                        {# <span class="badge bg-secondary ms-1">{{ wishlist_item_count }}</span> #}
+                    </a>
+
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-dark pt-5 pb-4">
+        <div class="container text-center text-md-start">
+            <div class="row">
+
+                <!-- Column 1: About & Certifications -->
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <h5 class="text-uppercase fw-bold mb-4">Local Marketplace</h5>
+                    <p>
+                        Your trusted partner for authentic local products. Certified sellers, quality goods, and guaranteed satisfaction.
+                    </p>
+                    <div class="mt-4">
+                        <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                    <h5 class="text-uppercase fw-bold my-4">Certifications</h5>
+                    <ul class="list-unstyled footer-list">
+                        <li><i class="fas fa-award me-2"></i> DTI Registered</li>
+                        <li><i class="fas fa-award me-2"></i> FDA Approved</li>
+                        <li><i class="fas fa-award me-2"></i> ISO 9001 Certified</li>
+                    </ul>
+                </div>
+
+                <!-- Column 2: Quick Links -->
+                <div class="col-md-6 col-lg-2 mb-4">
+                    <h5 class="text-uppercase fw-bold mb-4">Products</h5>
+                    <ul class="list-unstyled footer-list">
+                        <li><a href="{% url 'marketplace:product_list' %}">All Products</a></li>
+                        <li><a href="{% url 'marketplace:category_list' %}">Categories</a></li>
+                        <li><a href="{% url 'marketplace:region_list' %}">Regions</a></li>
+                        <li><a href="#">New Arrivals</a></li>
+                        <li><a href="#">Best Sellers</a></li>
+                    </ul>
+                </div>
+
+                <!-- Column 3: Contact & Hours -->
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <h5 class="text-uppercase fw-bold mb-4">Contact & Hours</h5>
+                    <ul class="list-unstyled footer-list">
+                        <li><i class="fas fa-phone me-3"></i> +63 912 345 6789</li>
+                        <li><i class="fas fa-envelope me-3"></i> support@localmarketplace.com</li>
+                        <li><i class="fas fa-map-marker-alt me-3"></i> 123 Rizal Ave, Manila, Philippines</li>
+                    </ul>
+                    <h5 class="text-uppercase fw-bold my-4">Business Hours</h5>
+                    <ul class="list-unstyled footer-list no-icon">
+                        <li>Monday - Friday: 9:00 AM - 8:00 PM</li>
+                        <li>Saturday: 10:00 AM - 6:00 PM</li>
+                        <li>Sunday: Closed</li>
+                    </ul>
+                </div>
+                
+                <!-- Column 4: Stay Connected & Support -->
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <h5 class="text-uppercase fw-bold mb-4">Categories</h5>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        {% for category in footer_categories %}
+                            <a href="{% url 'marketplace:category_detail' category.slug %}" class="footer-category-block" style="display:inline-block;padding:2px 8px;font-weight:bold;font-size:0.95em;color:#fff;background-color:{% cycle '#1a2a38' '#e1701a' '#ffe600' '#219150' '#222' '#00aeea' '#e53935' '#7c43bd' '#1976d2' %};border-radius:3px;text-decoration:none;">
+                                {{ category.name }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="footer-bottom py-3 mt-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6 text-center text-md-start">
+                        <p class="mb-0">&copy; {% now "Y" %} Local Marketplace. All rights reserved.</p>
+                    </div>
+                    <div class="col-md-6 text-center text-md-end">
+                        <a href="#" class="me-3">Privacy Policy</a>
+                        <a href="#" class="me-3">Terms of Service</a>
+                        <a href="#">Cookie Policy</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Splash screen handling
+            const splashScreen = document.getElementById('splash-screen');
+            if (splashScreen) {
+                if (!sessionStorage.getItem('splashShown')) {
+                    sessionStorage.setItem('splashShown', 'true');
+                    setTimeout(() => {
+                        splashScreen.style.opacity = '0';
+                        splashScreen.style.visibility = 'hidden';
+                        setTimeout(() => {
+                            splashScreen.remove();
+                        }, 500);
+                    }, 3000);
+                } else {
+                    splashScreen.remove();
+                }
+            }
+
+            // Handle wishlist functionality
+            document.querySelectorAll('.add-to-wishlist').forEach(button => {
+                button.addEventListener('click', function() {
+                    const productId = this.dataset.productId;
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                    fetch('{% url "marketplace:api_toggle_wishlist" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: `product_id=${productId}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            this.classList.toggle('active');
+                            this.classList.toggle('btn-outline-primary');
+                            this.classList.toggle('btn-outline-danger');
+                            
+                            const icon = this.querySelector('i');
+                            
+                            // Check if the button has text to update
+                            const hasText = this.innerText.trim() !== '';
+
+                            if (data.action === 'added') {
+                                if (hasText) {
+                                    this.innerHTML = '<i class="fas fa-heart me-2"></i>Remove from Wishlist';
+                                } else {
+                                    icon.className = 'fas fa-heart';
+                                }
+                            } else {
+                                if (hasText) {
+                                    this.innerHTML = '<i class="far fa-heart me-2"></i>Add to Wishlist';
+                                } else {
+                                    icon.className = 'far fa-heart';
+                                }
+                            }
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html> 

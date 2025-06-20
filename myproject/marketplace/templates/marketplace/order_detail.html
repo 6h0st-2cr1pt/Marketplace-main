@@ -1,0 +1,378 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order #{{ order.id }} - Local Marketplace{% endblock %}
+
+{% block content %}
+{% if messages %}
+  {% for message in messages %}
+    {% with msg_type='success' %}
+      {% if 'success' in message.tags %}{% with msg_type='success' %}{% endwith %}
+      {% elif 'info' in message.tags %}{% with msg_type='info' %}{% endwith %}
+      {% elif 'warning' in message.tags %}{% with msg_type='warning' %}{% endwith %}
+      {% elif 'error' in message.tags or 'danger' in message.tags %}{% with msg_type='error' %}{% endwith %}
+      {% endif %}
+    {% endwith %}
+    <div id="message-popup-overlay-{{ forloop.counter }}">
+      <div class="receipt-popup-content glassmorphism">
+        <div class="checkmark-container">
+          {% if msg_type == 'success' %}
+            <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark__check" fill="none" d="M14 27l7 7 16-16"/></svg>
+          {% elif msg_type == 'info' %}
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#2196f3" stroke-width="2" fill="#e3f2fd"/><rect x="11" y="10" width="2" height="7" rx="1" fill="#2196f3"/><rect x="11" y="7" width="2" height="2" rx="1" fill="#2196f3"/></svg>
+          {% elif msg_type == 'warning' %}
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#ffc107" stroke-width="2" fill="#fff8e1"/><rect x="11" y="7" width="2" height="7" rx="1" fill="#ffc107"/><rect x="11" y="16" width="2" height="2" rx="1" fill="#ffc107"/></svg>
+          {% elif msg_type == 'error' %}
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#e53935" stroke-width="2" fill="#ffebee"/><path d="M15 9l-6 6M9 9l6 6" stroke="#e53935" stroke-width="2" stroke-linecap="round"/></svg>
+          {% endif %}
+        </div>
+        {% if msg_type == 'success' %}<div class="confetti"></div>{% endif %}
+        <div class="receipt-popup-message {{ msg_type }}">{{ message }}</div>
+      </div>
+    </div>
+    <style>
+    #message-popup-overlay-{{ forloop.counter }} {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(33,150,243,0.10);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s;
+      backdrop-filter: blur(2px);
+    }
+    .glassmorphism {
+      background: rgba(255,255,255,0.18);
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(33,150,243,0.18), 0 2px 8px rgba(0,0,0,0.10);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      backdrop-filter: blur(12px) saturate(180%);
+      -webkit-backdrop-filter: blur(12px) saturate(180%);
+      padding: 44px 38px 32px 38px;
+      min-width: 300px;
+      min-height: 210px;
+      position: relative;
+      text-align: center;
+      font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      animation: scaleIn 0.5s cubic-bezier(.68,-0.55,.27,1.55);
+    }
+    @keyframes scaleIn {
+      0% { transform: scale(0.7); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .checkmark-container { display: inline-block; position: relative; margin-bottom: 10px; }
+    .checkmark {
+      width: 80px;
+      height: 80px;
+      display: block;
+      stroke-width: 3.5;
+      stroke: #2196f3;
+      stroke-miterlimit: 10;
+      margin: 0 auto 10px auto;
+      box-shadow: 0 0 0 2px #e3f2fd;
+      border-radius: 50%;
+      background: #fff;
+      filter: drop-shadow(0 0 8px #2196f3aa);
+    }
+    .checkmark__circle {
+      stroke-dasharray: 166;
+      stroke-dashoffset: 166;
+      stroke-width: 3.5;
+      stroke: #2196f3;
+      fill: none;
+      animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+    }
+    .checkmark__check {
+      transform-origin: 50% 50%;
+      stroke-dasharray: 48;
+      stroke-dashoffset: 48;
+      stroke: #43a047;
+      stroke-width: 3.5;
+      animation: stroke 0.4s 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+    }
+    @keyframes stroke {
+      100% { stroke-dashoffset: 0; }
+    }
+    .confetti {
+      position: absolute;
+      left: 50%;
+      top: 40px;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+    }
+    .receipt-popup-message {
+      font-size: 1.25em;
+      font-weight: 600;
+      margin-top: 1.2em;
+      letter-spacing: 0.01em;
+      text-shadow: 0 1px 0 #fff;
+    }
+    .receipt-popup-message.success { color: #2196f3; }
+    .receipt-popup-message.info { color: #1976d2; }
+    .receipt-popup-message.warning { color: #ff9800; }
+    .receipt-popup-message.error { color: #e53935; }
+    </style>
+    <script>
+    (function() {
+      var msgType = '{{ msg_type }}';
+      if (msgType === 'success') {
+        var confettiColors = ['#2196f3', '#43a047', '#ffc107', '#e91e63', '#ff9800', '#00bcd4', '#8bc34a'];
+        var confetti = document.querySelector('#message-popup-overlay-{{ forloop.counter }} .confetti');
+        if (confetti) {
+          for (var i = 0; i < 32; i++) {
+            var div = document.createElement('div');
+            div.style.position = 'absolute';
+            div.style.width = (6 + Math.random()*6) + 'px';
+            div.style.height = (12 + Math.random()*8) + 'px';
+            div.style.background = confettiColors[Math.floor(Math.random()*confettiColors.length)];
+            div.style.left = (Math.random()*160-80) + 'px';
+            div.style.top = (Math.random()*-40) + 'px';
+            div.style.opacity = 0.85;
+            div.style.transform = 'rotate(' + (Math.random()*360) + 'deg)';
+            div.style.borderRadius = (Math.random() > 0.5 ? '3px' : '50%');
+            div.style.animation = 'confetti-fall 1.4s ease-out forwards';
+            div.style.animationDelay = (Math.random()*0.4) + 's';
+            confetti.appendChild(div);
+          }
+        }
+      }
+      // Auto-hide popup after 2 seconds
+      setTimeout(function() {
+        var popup = document.getElementById('message-popup-overlay-{{ forloop.counter }}');
+        if (popup) {
+          popup.style.transition = 'opacity 0.4s';
+          popup.style.opacity = 0;
+          setTimeout(function() { popup.remove(); }, 400);
+        }
+      }, 2000);
+    })();
+    </script>
+    <style>
+    @keyframes confetti-fall {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(100px) scale(0.7); }
+    }
+    </style>
+  {% endfor %}
+{% endif %}
+
+<style>
+/* Delivery Animation */
+.delivery-animation {
+    width: 120px;
+    margin: 0 auto 2em auto;
+    position: relative;
+    height: 60px;
+}
+.truck {
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 100px;
+    height: 40px;
+    animation: truck-move 2s linear infinite alternate;
+    z-index: 2;
+}
+@keyframes truck-move {
+    0% { left: 0; }
+    100% { left: 20px; }
+}
+.truck-body {
+    width: 60px;
+    height: 25px;
+    background: #2196f3;
+    border-radius: 5px 5px 3px 3px;
+    position: absolute;
+    left: 10px;
+    top: 10px;
+}
+.truck-cab {
+    width: 20px;
+    height: 15px;
+    background: #90caf9;
+    border-radius: 3px;
+    position: absolute;
+    left: 70px;
+    top: 20px;
+}
+.truck-wheel {
+    width: 10px;
+    height: 10px;
+    background: #555;
+    border-radius: 50%;
+    position: absolute;
+    top: 30px;
+}
+.truck-wheel.left { left: 20px; }
+.truck-wheel.right { left: 60px; }
+
+/* Timeline */
+.delivery-timeline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 2em 0 2em 0;
+    position: relative;
+    padding: 0 10px;
+}
+.timeline-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    color: #bbb;
+    font-weight: bold;
+    z-index: 1;
+}
+.timeline-step.active {
+    color: #2196f3;
+}
+.timeline-step::before {
+    content: '';
+    display: block;
+    margin: 0 auto 8px auto;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #bbb;
+    border: 2px solid #bbb;
+    transition: background 0.3s, border 0.3s;
+}
+.timeline-step.active::before {
+    background: #2196f3;
+    border: 2px solid #2196f3;
+}
+.timeline-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: -50%;
+    width: 100%;
+    height: 4px;
+    background: #bbb;
+    z-index: 0;
+}
+.timeline-step.active:not(:last-child)::after {
+    background: #2196f3;
+}
+</style>
+
+<div class="delivery-animation">
+    <div class="truck">
+        <div class="truck-body"></div>
+        <div class="truck-cab"></div>
+        <div class="truck-wheel left"></div>
+        <div class="truck-wheel right"></div>
+    </div>
+</div>
+
+<div class="delivery-timeline">
+    <div class="timeline-step {% if order.status == 'pending' or order.status == 'processing' or order.status == 'shipped' or order.status == 'delivered' %}active{% endif %}">Ordered</div>
+    <div class="timeline-step {% if order.status == 'processing' or order.status == 'shipped' or order.status == 'delivered' %}active{% endif %}">Processing</div>
+    <div class="timeline-step {% if order.status == 'shipped' or order.status == 'delivered' %}active{% endif %}">Shipped</div>
+    <div class="timeline-step {% if order.status == 'delivered' %}active{% endif %}">Delivered</div>
+</div>
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Order Details -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="mb-0">Order #{{ order.id }}</h4>
+                        <span class="badge bg-{{ order.status|lower }}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Order Information</h6>
+                            <p class="mb-1"><strong>Date:</strong> {{ order.created_at|date:"F j, Y" }}</p>
+                            <p class="mb-1"><strong>Payment Method:</strong> {{ order.get_payment_method_display }}</p>
+                            <p class="mb-0"><strong>Total Amount:</strong> ₱{{ order.total_price }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3">Shipping Information</h6>
+                            <p class="mb-1"><strong>Name:</strong> {{ order.full_name }}</p>
+                            <p class="mb-1"><strong>Phone:</strong> {{ order.phone }}</p>
+                            <p class="mb-0"><strong>Address:</strong> {{ order.address }}</p>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mb-3">Order Items</h6>
+                    {% for item in order.items.all %}
+                    <div class="row mb-3">
+                        <div class="col-md-2">
+                            {% if item.product.get_primary_image %}
+                                <img src="{{ item.product.get_primary_image.url }}" alt="{{ item.product.name }}" class="img-fluid rounded">
+                            {% else %}
+                                <img src="{% static 'images/no-image.png' %}" alt="No image available" class="img-fluid rounded">
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-1">{{ item.product.name }}</h6>
+                            <p class="text-muted mb-0">{{ item.product.category.name }}</p>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <p class="mb-0">Qty: {{ item.quantity }}</p>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <p class="mb-0">₱{{ item.price }}</p>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}<hr>{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Order Summary -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Order Summary</h5>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <span>₱{{ order.total_price }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Shipping</span>
+                        <span>Free</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-4">
+                        <strong>Total</strong>
+                        <strong>₱{{ order.total_price }}</strong>
+                    </div>
+                    
+                    {% if order.status == 'shipped' and user == order.user %}
+                        <form method="post" action="{% url 'marketplace:confirm_receipt' order.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success w-100 mb-3">Confirm Receipt</button>
+                        </form>
+                    {% endif %}
+                    
+                    <a href="{% url 'marketplace:orders' %}" class="btn btn-outline-primary w-100">
+                        Back to Orders
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Need Help? -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Need Help?</h5>
+                    <p class="text-muted mb-3">If you have any questions about your order, please contact our support team.</p>
+                    <a href="{% url 'marketplace:contact' %}" class="btn btn-primary w-100">
+                        Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
