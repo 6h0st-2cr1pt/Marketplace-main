@@ -1,6 +1,5 @@
 from django.urls import path
 from . import views
-from .admin import admin_analytics_data
 
 app_name = 'marketplace'
 
@@ -53,5 +52,4 @@ urlpatterns = [
     path('api/wishlist/toggle/', views.api_toggle_wishlist, name='api_toggle_wishlist'),
     path('api/search/', views.api_search, name='api_search'),
     path('api/cities/', views.api_cities, name='api_cities'),
-    path('admin/analytics-data/', views.admin_analytics_data, name='admin_analytics_data'),
 ] 

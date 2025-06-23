@@ -18,10 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from marketplace.views import admin_home
+from marketplace.views import admin_home, admin_analytics_data
 
 urlpatterns = [
     path('admin/home/', admin_home, name='admin_home'),
+    path('admin/analytics-data/', admin_analytics_data, name='admin_analytics_data'),
     path('admin/', admin.site.urls),
     path('', include('marketplace.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

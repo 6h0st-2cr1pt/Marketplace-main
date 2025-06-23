@@ -1660,7 +1660,7 @@ small {
 .footer-dark .input-group .form-control::placeholder {
     color: #a9a9a9;
 }
-
+ 
 .footer-dark .input-group .btn-primary {
     background: linear-gradient(90deg, #e5ff00, #ffb700);
     border: none;

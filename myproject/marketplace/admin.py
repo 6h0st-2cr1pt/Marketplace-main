@@ -5,9 +5,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 import openpyxl
-from django.http import HttpResponse, JsonResponse
-from django.urls import path
-from django.db.models.functions import TruncMonth
+from django.http import HttpResponse
 from django.db.models import Count, Sum
 
 User = get_user_model()
@@ -244,58 +242,8 @@ admin.site.unregister(User)
 class CustomUserAdmin(UserAdmin):
     list_filter = UserAdmin.list_filter + (SellerProfileFilter,)
 
-def admin_analytics_data(request):
-    # Orders per month (last 6 months)
-    qs = (
-        Order.objects
-        .annotate(month=TruncMonth('created_at'))
-        .values('month')
-        .annotate(count=Count('id'))
-        .order_by('month')
-    )
-    months = []
-    order_counts = []
-    for entry in qs:
-        months.append(entry['month'].strftime('%b %Y'))
-        order_counts.append(entry['count'])
-
-    # Number of sellers (users with SellerProfile)
-    sellers_count = SellerProfile.objects.count()
-
-    # Number of buyers (users without SellerProfile)
-    buyers_count = User.objects.filter(seller_profile__isnull=True).count()
-
-    # Total products
-    products_count = Product.objects.count()
-
-    # Total sales/profit (sum of all order totals)
-    total_sales = Order.objects.aggregate(total=Sum('total_price'))['total'] or 0
-
-    # Top selling product (by order item count)
-    top_product = (
-        OrderItem.objects
-        .values('product__name')
-        .annotate(total_sold=Sum('quantity'))
-        .order_by('-total_sold')
-        .first()
-    )
-    top_product_name = top_product['product__name'] if top_product else 'N/A'
-    top_product_sold = top_product['total_sold'] if top_product else 0
-
-    return JsonResponse({
-        'months': months,
-        'order_counts': order_counts,
-        'sellers_count': sellers_count,
-        'buyers_count': buyers_count,
-        'products_count': products_count,
-        'total_sales': float(total_sales),
-        'top_product_name': top_product_name,
-        'top_product_sold': top_product_sold,
-    })
-
 # Add the analytics endpoint to admin URLs
 admin_urls = [
-    path('admin-analytics-data/', admin_analytics_data, name='admin_analytics_data'),
 ]
 try:
     admin.site.get_urls = (lambda get_urls: lambda: admin_urls + get_urls())(admin.site.get_urls)
