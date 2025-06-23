@@ -67,7 +67,7 @@ class ProductImageInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'seller', 'category', 'price', 'stock', 'region', 'city', 'is_active', 'display_average_rating', 'display_review_count', 'created_at', 'preview_image')
+    list_display = ('name', 'seller', 'category', 'price', 'stock', 'region', 'city', 'is_active', 'is_featured', 'display_average_rating', 'display_review_count', 'created_at', 'preview_image')
     list_filter = ('category', 'region', 'city', 'is_active', 'created_at')
     search_fields = ('name', 'description', 'seller__username', 'location')
     prepopulated_fields = {'slug': ('name',)}
@@ -81,7 +81,7 @@ class ProductAdmin(admin.ModelAdmin):
             'description': 'Product location details'
         }),
         ('Stock Level', {
-            'fields': ('stock', 'is_active'),
+            'fields': ('stock', 'is_active', 'is_featured'),
             'description': 'Manage product stock and availability'
         }),
         ('Seller Information', {
