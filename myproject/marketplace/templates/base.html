@@ -229,7 +229,8 @@
 
             // Handle wishlist functionality
             document.querySelectorAll('.add-to-wishlist').forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault(); // Prevent default button behavior
                     const productId = this.dataset.productId;
                     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
@@ -244,30 +245,32 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            this.classList.toggle('active');
-                            this.classList.toggle('btn-outline-primary');
-                            this.classList.toggle('btn-outline-danger');
-                            
                             const icon = this.querySelector('i');
-                            
-                            // Check if the button has text to update
                             const hasText = this.innerText.trim() !== '';
 
                             if (data.action === 'added') {
+                                this.classList.add('active', 'btn-danger');
+                                this.classList.remove('btn-outline-primary');
                                 if (hasText) {
                                     this.innerHTML = '<i class="fas fa-heart me-2"></i>Remove from Wishlist';
                                 } else {
                                     icon.className = 'fas fa-heart';
                                 }
-                            } else {
+                            } else { // 'removed'
+                                this.classList.remove('active', 'btn-danger');
+                                this.classList.add('btn-outline-primary');
                                 if (hasText) {
                                     this.innerHTML = '<i class="far fa-heart me-2"></i>Add to Wishlist';
                                 } else {
                                     icon.className = 'far fa-heart';
                                 }
                             }
+                        } else {
+                            // Optionally handle error (e.g., show an alert)
+                            console.error(data.message);
                         }
-                    });
+                    })
+                    .catch(error => console.error('Error toggling wishlist:', error));
                 });
             });
         });

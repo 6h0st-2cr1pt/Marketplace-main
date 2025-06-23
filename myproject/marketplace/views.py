@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count, Sum, Exists, OuterRef
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from .models import Product, Category, Cart, CartItem, Wishlist, Order, OrderItem, Region, City, Review, User
@@ -27,10 +27,16 @@ def home(request):
     return render(request, 'home.html', context)
 
 def product_list(request):
-    products = Product.objects.filter(is_active=True).select_related('category', 'region', 'city')
+    products_query = Product.objects.filter(is_active=True).select_related('category', 'region', 'city')
+    
+    # Annotate with wishlist status if user is authenticated
+    if request.user.is_authenticated:
+        wishlist_subquery = Wishlist.objects.filter(user=request.user, product_id=OuterRef('pk'))
+        products_query = products_query.annotate(is_in_wishlist=Exists(wishlist_subquery))
+    
     # Debug print to check stock values
     print("\nProduct Stock Levels:")
-    for product in products:
+    for product in products_query:
         print(f"Product: {product.name}, Stock: {product.stock}")
     print("\n")
     
@@ -40,7 +46,7 @@ def product_list(request):
     # Search
     search_query = request.GET.get('q')
     if search_query:
-        products = products.filter(
+        products_query = products_query.filter(
             Q(name__icontains=search_query) |
             Q(description__icontains=search_query) |
             Q(location__icontains=search_query)
@@ -49,29 +55,29 @@ def product_list(request):
     # Filter by category
     category_slug = request.GET.get('category')
     if category_slug:
-        products = products.filter(category__slug=category_slug)
+        products_query = products_query.filter(category__slug=category_slug)
     
     # Filter by region
     region_slug = request.GET.get('region')
     if region_slug:
-        products = products.filter(region__slug=region_slug)
+        products_query = products_query.filter(region__slug=region_slug)
     
     # Filter by city
     city_slug = request.GET.get('city')
     if city_slug:
-        products = products.filter(city__slug=city_slug)
+        products_query = products_query.filter(city__slug=city_slug)
     
     # Sort products
     sort = request.GET.get('sort', 'newest')
     if sort == 'price_low':
-        products = products.order_by('price')
+        products_query = products_query.order_by('price')
     elif sort == 'price_high':
-        products = products.order_by('-price')
+        products_query = products_query.order_by('-price')
     else:  # newest
-        products = products.order_by('-created_at')
+        products_query = products_query.order_by('-created_at')
     
     # Pagination
-    paginator = Paginator(products, 12)  # Show 12 products per page
+    paginator = Paginator(products_query, 12)  # Show 12 products per page
     page = request.GET.get('page')
     products = paginator.get_page(page)
     
@@ -142,22 +148,31 @@ def category_list(request):
 
 def category_detail(request, slug):
     category = get_object_or_404(Category, slug=slug)
-    products = Product.objects.filter(category=category, is_active=True)
+    products_query = Product.objects.filter(category=category, is_active=True)
     
+    # Annotate with wishlist status if user is authenticated
+    if request.user.is_authenticated:
+        wishlist_subquery = Wishlist.objects.filter(user=request.user, product_id=OuterRef('pk'))
+        products_query = products_query.annotate(is_in_wishlist=Exists(wishlist_subquery))
+            
     # Sort products
     sort = request.GET.get('sort', 'newest')
     if sort == 'price_low':
-        products = products.order_by('price')
+        products_query = products_query.order_by('price')
     elif sort == 'price_high':
-        products = products.order_by('-price')
+        products_query = products_query.order_by('-price')
     else:  # newest
-        products = products.order_by('-created_at')
+        products_query = products_query.order_by('-created_at')
     
     # Filter by condition
     condition = request.GET.get('condition')
     if condition:
-        products = products.filter(condition=condition)
+        products_query = products_query.filter(condition=condition)
     
+    paginator = Paginator(products_query, 12)
+    page = request.GET.get('page')
+    products = paginator.get_page(page)
+
     context = {
         'category': category,
         'products': products,
@@ -179,12 +194,17 @@ def region_list(request):
 def region_detail(request, slug):
     """Display products filtered by region"""
     region = get_object_or_404(Region, slug=slug)
-    products = Product.objects.filter(region=region, is_active=True).select_related('category', 'city')
+    products_query = Product.objects.filter(region=region, is_active=True).select_related('category', 'city')
     
+    # Annotate with wishlist status
+    if request.user.is_authenticated:
+        wishlist_subquery = Wishlist.objects.filter(user=request.user, product_id=OuterRef('pk'))
+        products_query = products_query.annotate(is_in_wishlist=Exists(wishlist_subquery))
+            
     # Search within region
     search_query = request.GET.get('q')
     if search_query:
-        products = products.filter(
+        products_query = products_query.filter(
             Q(name__icontains=search_query) |
             Q(description__icontains=search_query) |
             Q(category__name__icontains=search_query)
@@ -193,24 +213,24 @@ def region_detail(request, slug):
     # Filter by city within region
     city_slug = request.GET.get('city')
     if city_slug:
-        products = products.filter(city__slug=city_slug)
+        products_query = products_query.filter(city__slug=city_slug)
     
     # Filter by category
     category_slug = request.GET.get('category')
     if category_slug:
-        products = products.filter(category__slug=category_slug)
+        products_query = products_query.filter(category__slug=category_slug)
     
     # Sort products
     sort = request.GET.get('sort', 'newest')
     if sort == 'price_low':
-        products = products.order_by('price')
+        products_query = products_query.order_by('price')
     elif sort == 'price_high':
-        products = products.order_by('-price')
+        products_query = products_query.order_by('-price')
     else:  # newest
-        products = products.order_by('-created_at')
+        products_query = products_query.order_by('-created_at')
     
     # Pagination
-    paginator = Paginator(products, 12)
+    paginator = Paginator(products_query, 12)
     page = request.GET.get('page')
     products = paginator.get_page(page)
     
@@ -229,12 +249,17 @@ def region_detail(request, slug):
 def city_detail(request, slug):
     """Display products filtered by city"""
     city = get_object_or_404(City, slug=slug)
-    products = Product.objects.filter(city=city, is_active=True).select_related('category', 'region')
+    products_query = Product.objects.filter(city=city, is_active=True).select_related('category', 'region')
     
+    # Annotate with wishlist status
+    if request.user.is_authenticated:
+        wishlist_subquery = Wishlist.objects.filter(user=request.user, product_id=OuterRef('pk'))
+        products_query = products_query.annotate(is_in_wishlist=Exists(wishlist_subquery))
+
     # Search within city
     search_query = request.GET.get('q')
     if search_query:
-        products = products.filter(
+        products_query = products_query.filter(
             Q(name__icontains=search_query) |
             Q(description__icontains=search_query) |
             Q(category__name__icontains=search_query)
@@ -243,28 +268,25 @@ def city_detail(request, slug):
     # Filter by category
     category_slug = request.GET.get('category')
     if category_slug:
-        products = products.filter(category__slug=category_slug)
+        products_query = products_query.filter(category__slug=category_slug)
     
     # Sort products
     sort = request.GET.get('sort', 'newest')
     if sort == 'price_low':
-        products = products.order_by('price')
+        products_query = products_query.order_by('price')
     elif sort == 'price_high':
-        products = products.order_by('-price')
+        products_query = products_query.order_by('-price')
     else:  # newest
-        products = products.order_by('-created_at')
+        products_query = products_query.order_by('-created_at')
     
-    # Pagination
-    paginator = Paginator(products, 12)
+    paginator = Paginator(products_query, 12)
     page = request.GET.get('page')
     products = paginator.get_page(page)
-    
-    categories = Category.objects.all()
-    
+
     context = {
         'city': city,
         'products': products,
-        'categories': categories,
+        'categories': Category.objects.all(),
     }
     return render(request, 'marketplace/city_detail.html', context)
 
