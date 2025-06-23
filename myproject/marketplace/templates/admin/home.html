@@ -430,6 +430,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td>₱${customer.avg_order_value.toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
                     </tr>
                 `).join('');
+
+                // Populate seller dropdown
+                const sellerFilter = document.getElementById('seller-filter');
+                const prevValue = sellerFilter.value;
+                // Remove all except the first option
+                while (sellerFilter.options.length > 1) sellerFilter.remove(1);
+                data.sellers.forEach(sellerObj => {
+                    const opt = document.createElement('option');
+                    opt.value = sellerObj.username;
+                    opt.textContent = sellerObj.name;
+                    sellerFilter.appendChild(opt);
+                });
+                // Restore previous selection if possible
+                sellerFilter.value = prevValue;
             })
             .catch(error => {
                 console.error('Error fetching analytics data:', error);

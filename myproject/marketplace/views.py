@@ -1006,6 +1006,12 @@ def admin_analytics_data(request):
             .order_by('-total_spent')[:10]
         )
         
+        # Get all sellers for dropdown
+        sellers = User.objects.filter(seller_profile__isnull=False).values('username', 'seller_profile__name').order_by('seller_profile__name')
+        seller_list = [
+            {'username': s['username'], 'name': s['seller_profile__name'] or s['username']} for s in sellers
+        ]
+        
         response_data = {
             'summary': {
                 'total_sales': float(today_sales),
@@ -1031,7 +1037,8 @@ def admin_analytics_data(request):
                 'growth': [0.0] * len(category_data)  # Simplified growth calculation
             },
             'seller_data': list(top_sellers),
-            'customer_data': list(top_customers)
+            'customer_data': list(top_customers),
+            'sellers': seller_list
         }
         
         return JsonResponse(response_data)
@@ -1066,5 +1073,6 @@ def admin_analytics_data(request):
                 'growth': []
             },
             'seller_data': [],
-            'customer_data': []
+            'customer_data': [],
+            'sellers': []
         })
