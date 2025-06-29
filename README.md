@@ -182,10 +182,6 @@ EMAIL_HOST_PASSWORD=your_app_password
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Support
-
-For support, email [support@email.com](mailto:support@email.com) or create an issue in the repository.
-
 ## Acknowledgments
 
 - Django Documentation
